@@ -1,0 +1,56 @@
+{
+  "home": {
+    "tagline": "Energy data governance and balance for Ecuador's electricity system.",
+    "cta": "Go to dashboard"
+  },
+  "dashboard": {
+    "title": "System Balance",
+    "subtitle": "Generation, demand and real-time balance"
+  },
+  "generationType": {
+    "hydraulic": "Hydraulic",
+    "thermal": "Thermal",
+    "solar": "Solar",
+    "wind": "Wind",
+    "biomass": "Biomass",
+    "other": "Other",
+    "total": "Total"
+  },
+  "units": {
+    "mwh": "MWh",
+    "mw": "MW",
+    "gwh": "GWh",
+    "percentage": "%",
+    "hours": "h"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "generation": "Generation",
+    "dispatch": "Dispatch",
+    "exports": "Export",
+    "settings": "Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "noData": "No data available",
+    "lastUpdated": "Last updated",
+    "download": "Download",
+    "filter": "Filter",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "confirm": "Confirm"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "email": "Email address",
+    "password": "Password",
+    "forgotPassword": "Forgot your password?"
+  }
+}

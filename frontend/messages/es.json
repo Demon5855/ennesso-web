@@ -1,0 +1,56 @@
+{
+  "home": {
+    "tagline": "Gobernanza de datos y balance energético para el sistema eléctrico del Ecuador.",
+    "cta": "Ir al dashboard"
+  },
+  "dashboard": {
+    "title": "Balance del Sistema",
+    "subtitle": "Generación, demanda y balance en tiempo real"
+  },
+  "generationType": {
+    "hydraulic": "Hidráulica",
+    "thermal": "Térmica",
+    "solar": "Solar",
+    "wind": "Eólica",
+    "biomass": "Biomasa",
+    "other": "Otro",
+    "total": "Total"
+  },
+  "units": {
+    "mwh": "MWh",
+    "mw": "MW",
+    "gwh": "GWh",
+    "percentage": "%",
+    "hours": "h"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "generation": "Generación",
+    "dispatch": "Despacho",
+    "exports": "Exportar",
+    "settings": "Configuración"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "retry": "Reintentar",
+    "noData": "Sin datos disponibles",
+    "lastUpdated": "Última actualización",
+    "download": "Descargar",
+    "filter": "Filtrar",
+    "from": "Desde",
+    "to": "Hasta",
+    "apply": "Aplicar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  }
+}
