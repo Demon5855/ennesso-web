@@ -27,24 +27,24 @@ graph TD
     end
 
     subgraph "Backend — FastAPI on Railway"
-        P[Pipelines\nCenacePipeline\nArcernnrPipeline]
-        S[Services\nGenerationService\nBalanceService]
-        E[Exporters\nExcelExporter\nPDFExporter]
-        API[API v1\n/generation\n/balance\n/export]
+        P[Pipelines<br/>CenacePipeline<br/>ArcernnrPipeline]
+        S[Services<br/>GenerationService<br/>BalanceService]
+        E[Exporters<br/>ExcelExporter<br/>PDFExporter]
+        API[API v1<br/>/generation<br/>/balance<br/>/export]
     end
 
     subgraph "Storage — Supabase"
         DB[(PostgreSQL)]
-        ST[Storage\nExport files]
+        ST[Storage<br/>Export files]
     end
 
     subgraph "Frontend — Next.js on Vercel"
-        UI[Dashboard\nCharts · KPIs · Tables]
-        I18N[i18n\nes · en · it]
+        UI[Dashboard<br/>Charts · KPIs · Tables]
+        I18N[i18n<br/>es · en · it]
     end
 
     subgraph "Scheduler"
-        CRON[APScheduler\nHourly ingestion]
+        CRON[APScheduler<br/>Hourly ingestion]
     end
 
     C1 --> P

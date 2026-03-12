@@ -3,20 +3,20 @@
 from fastapi import APIRouter, Query
 from datetime import date
 
-from app.models.generation import GenerationRecord, GenerationSource
+from app.models.energy import EnergyRecord, EnergyRecordCreate, GenerationType
 
 router = APIRouter()
 
 
-@router.get("/", response_model=list[GenerationRecord])
+@router.get("/", response_model=list[EnergyRecord])
 async def list_generation(
     country_code: str = Query(default="EC", min_length=2, max_length=2),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
-    source: GenerationSource | None = Query(default=None),
+    source: GenerationType | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=100, ge=1, le=1000),
-) -> list[GenerationRecord]:
+) -> list[EnergyRecord]:
     """
     Return paginated generation records.
 
