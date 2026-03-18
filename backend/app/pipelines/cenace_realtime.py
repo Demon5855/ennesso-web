@@ -81,7 +81,7 @@ async def fetch_html() -> str:
     """
     logger.info("Fetching CENACE real-time HTML from %s", CENACE_REALTIME_URL)
 
-    async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=60.0, follow_redirects=True, verify=False) as client:
         response = await client.get(CENACE_REALTIME_URL)
         response.raise_for_status()
 

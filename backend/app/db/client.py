@@ -1,12 +1,4 @@
-"""Supabase async client — singleton factory.
-
-Usage::
-
-    from app.db.client import get_client
-
-    client = await get_client()
-    response = await client.table("energy_records").select("*").execute()
-"""
+"""Supabase async client — singleton factory."""
 
 import logging
 from typing import Annotated
@@ -23,23 +15,15 @@ _client: AsyncClient | None = None
 
 
 async def get_client() -> AsyncClient:
-    """Return a cached async Supabase client using the service role key.
-
-    Initialises the client on first call and reuses it for subsequent calls.
-    This is safe for use in FastAPI dependency injection.
-
-    Returns:
-        An authenticated ``AsyncClient`` instance with service role access.
-    """
+    """Return a cached async Supabase client using the service role key."""
     global _client
     if _client is None:
         logger.info("Initialising Supabase async client")
         _client = await acreate_client(
-            settings.supabase_url,
+            str(settings.supabase_url),
             settings.supabase_service_role_key,
         )
     return _client
 
 
-# FastAPI dependency type alias
 SupabaseDep = Annotated[AsyncClient, Depends(get_client)]

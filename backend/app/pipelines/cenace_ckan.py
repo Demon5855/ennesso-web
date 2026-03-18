@@ -635,41 +635,31 @@ def parse_capacity_csv(
 # ---------------------------------------------------------------------------
 
 
-async def _period_already_ingested(
-    resource_key: str,
-) -> bool:
-    """Check if a CKAN resource has already been ingested.
-
-    Args:
-        resource_key: Key from ``CKAN_RESOURCES``.
-
-    Returns:
-        True if records for this source + period exist in the DB.
-    """
+async def _period_already_ingested(resource_key: str) -> bool:
     resource = CKAN_RESOURCES[resource_key]
     period = resource["period"]
-    client = await get_client()
-
-    response = (
-        await client.table("data_lineage")
-        .select("id", count="exact")
-        .ilike("correction_note", f"%{period}%")
-        .limit(1)
-        .execute()
-    )
-
-    count = response.count or 0
-    if count > 0:
-        logger.info(
-            "Resource '%s' (period=%s) already ingested (%d lineage records) — skipping.",
-            resource_key,
-            period,
-            count,
+    
+    try:
+        client = await get_client()
+        response = (
+            await client.table("data_lineage")
+            .select("id")
+            .eq("correction_note", f"CKAN period={period}")
+            .limit(1)
+            .execute()
         )
-        return True
-    return False
-
-
+        count = len(response.data) if response.data else 0
+        if count > 0:
+            logger.info("Resource '%s' already ingested — skipping.", resource_key)
+            return True
+        return False
+    except Exception as exc:
+        logger.warning(
+            "Could not check deduplication for '%s': %s — proceeding with ingestion.",
+            resource_key, exc
+        )
+        return False
+        
 # ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
