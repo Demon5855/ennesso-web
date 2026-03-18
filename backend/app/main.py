@@ -3,20 +3,22 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.api.v1.router import api_router
+from app.pipelines.scheduler import create_scheduler
+from app.models.ingest import IngestSummary
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Application lifespan: startup and shutdown hooks."""
-    # TODO: initialise DB connection pool
-    # TODO: start APScheduler ingestion jobs
+    """Application lifespan: start scheduler on startup, shut it down cleanly."""
+    scheduler = create_scheduler()
+    scheduler.start()
     yield
-    # TODO: shutdown scheduler and close connections
+    scheduler.shutdown(wait=False)
 
 
 app = FastAPI(
@@ -43,3 +45,15 @@ app.include_router(api_router, prefix="/api/v1")
 async def health_check() -> dict[str, str]:
     """Liveness probe for Railway / load balancers."""
     return {"status": "ok", "env": settings.app_env}
+
+
+@app.post("/api/v1/ingest/trigger", response_model=IngestSummary, tags=["ops"])
+async def trigger_ingestion(background_tasks: BackgroundTasks) -> dict[str, str]:
+    """Manually trigger a full ingestion cycle (dev / backfill use only).
+
+    Runs in the background — returns immediately with a 202-style response.
+    Check logs for results.
+    """
+    from app.services.etl import run_full_ingestion
+    background_tasks.add_task(run_full_ingestion)
+    return {"status": "ingestion triggered", "env": settings.app_env}
