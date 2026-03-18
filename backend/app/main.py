@@ -14,7 +14,7 @@ from app.models.ingest import IngestSummary
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Application lifespan: start scheduler on startup, shut it down cleanly."""
+    """Application lifespan: start scheduler on startup, shut down cleanly."""
     scheduler = create_scheduler()
     scheduler.start()
     yield
@@ -23,7 +23,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="Ennesso API",
-    description="Energy data governance and balance API for Ecuador's electricity system.",
+    description=(
+        "Energy data governance and balance API for Ecuador's electricity system. "
+        "Provides generation, carbon, lineage, and quality endpoints."
+    ),
     version="0.1.0",
     docs_url="/docs" if settings.app_env != "production" else None,
     redoc_url="/redoc" if settings.app_env != "production" else None,
@@ -41,17 +44,11 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get("/health", tags=["ops"])
-async def health_check() -> dict[str, str]:
-    """Liveness probe for Railway / load balancers."""
-    return {"status": "ok", "env": settings.app_env}
-
-
 @app.post("/api/v1/ingest/trigger", response_model=IngestSummary, tags=["ops"])
-async def trigger_ingestion(background_tasks: BackgroundTasks) -> dict[str, str]:
+async def trigger_ingestion(background_tasks: BackgroundTasks) -> dict:
     """Manually trigger a full ingestion cycle (dev / backfill use only).
 
-    Runs in the background — returns immediately with a 202-style response.
+    Runs pipelines in the background — returns immediately.
     Check logs for results.
     """
     from app.services.etl import run_full_ingestion
