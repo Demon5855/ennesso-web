@@ -8,7 +8,7 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
       <div className="text-center space-y-4">
         <h1 className="font-mono text-4xl font-semibold text-primary">
-          ennesso
+          Ennesso
         </h1>
         <p className="text-muted-foreground text-lg max-w-md">
           {t("tagline")}

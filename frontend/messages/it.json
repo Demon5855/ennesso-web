@@ -5,7 +5,23 @@
   },
   "dashboard": {
     "title": "Bilancio del sistema",
-    "subtitle": "Generazione, domanda e bilancio in tempo reale"
+    "subtitle": "Generazione, domanda e bilancio in tempo reale",
+    "overview": "Panoramica",
+    "generation": "Generazione",
+    "demand": "Domanda",
+    "carbon": "Carbonio",
+    "simulator": "Simulatore",
+    "reports": "Rapporti",
+    "lineage": "Provenienza"
+  },
+  "metrics": {
+    "totalGeneration": "Generazione Totale",
+    "renewableShare": "Quota Rinnovabile",
+    "co2Intensity": "Intensità CO₂",
+    "co2Avoided": "CO₂ Evitata",
+    "totalDemand": "Domanda Totale",
+    "avgDaily": "Media Giornaliera",
+    "peakDay": "Picco del Periodo"
   },
   "generationType": {
     "hydraulic": "Idraulica",
@@ -21,7 +37,16 @@
     "mw": "MW",
     "gwh": "GWh",
     "percentage": "%",
-    "hours": "h"
+    "hours": "h",
+    "kgPerMwh": "kg/MWh",
+    "usdPerMwh": "USD/MWh"
+  },
+  "quality": {
+    "ok": "OK",
+    "warning": "Avviso",
+    "error": "Errore",
+    "totalRecords": "Totale record",
+    "recentErrors": "Errori recenti"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -52,5 +77,21 @@
     "email": "Indirizzo email",
     "password": "Password",
     "forgotPassword": "Password dimenticata?"
+  },
+  "simulator": {
+    "title": "Simulatore di Mix",
+    "description": "Regola il mix di generazione e visualizza il ricalcolo in tempo reale di carbonio e costi.",
+    "referenceTotal": "Totale di riferimento",
+    "generationMix": "Mix di Generazione",
+    "results": "Risultati"
+  },
+  "reports": {
+    "title": "Rapporti",
+    "parameters": "Parametri del Rapporto",
+    "startDate": "Data inizio",
+    "endDate": "Data fine",
+    "includeLineage": "Includi sezione audit di provenienza",
+    "exportExcel": "Esporta Excel",
+    "exportPdf": "Esporta PDF"
   }
 }

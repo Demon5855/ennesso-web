@@ -5,7 +5,23 @@
   },
   "dashboard": {
     "title": "System Balance",
-    "subtitle": "Generation, demand and real-time balance"
+    "subtitle": "Generation, demand and real-time balance",
+    "overview": "Overview",
+    "generation": "Generation",
+    "demand": "Demand",
+    "carbon": "Carbon",
+    "simulator": "Simulator",
+    "reports": "Reports",
+    "lineage": "Lineage"
+  },
+  "metrics": {
+    "totalGeneration": "Total Generation",
+    "renewableShare": "Renewable Share",
+    "co2Intensity": "CO₂ Intensity",
+    "co2Avoided": "CO₂ Avoided",
+    "totalDemand": "Total Demand",
+    "avgDaily": "Avg Daily",
+    "peakDay": "Peak Day"
   },
   "generationType": {
     "hydraulic": "Hydraulic",
@@ -21,7 +37,16 @@
     "mw": "MW",
     "gwh": "GWh",
     "percentage": "%",
-    "hours": "h"
+    "hours": "h",
+    "kgPerMwh": "kg/MWh",
+    "usdPerMwh": "USD/MWh"
+  },
+  "quality": {
+    "ok": "OK",
+    "warning": "Warning",
+    "error": "Error",
+    "totalRecords": "Total records",
+    "recentErrors": "Recent errors"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -52,5 +77,21 @@
     "email": "Email address",
     "password": "Password",
     "forgotPassword": "Forgot your password?"
+  },
+  "simulator": {
+    "title": "Mix Simulator",
+    "description": "Adjust the generation mix and see real-time carbon and cost recalculation.",
+    "referenceTotal": "Reference total",
+    "generationMix": "Generation Mix",
+    "results": "Results"
+  },
+  "reports": {
+    "title": "Reports",
+    "parameters": "Report Parameters",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "includeLineage": "Include data lineage audit section",
+    "exportExcel": "Export Excel",
+    "exportPdf": "Export PDF"
   }
 }
