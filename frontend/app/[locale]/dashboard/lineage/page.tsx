@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { TableSkeleton } from "@/components/ui/skeletons";
 import { QualityBadge } from "@/components/ui/quality-badge";
 import { LineageSheet } from "@/components/dashboard/lineage-sheet";
 import { fetchQualitySummary } from "@/lib/api-client";
@@ -44,81 +46,79 @@ export default function LineagePage() {
   return (
     <div className="flex flex-col h-full">
       <Topbar title={tDash("lineage").toUpperCase()} />
+      <ErrorBoundary>
 
-      <div className="p-6 space-y-5">
-        {/* Summary strip */}
-        {summary && (
-          <div className="flex gap-6 p-4 bg-surface border border-border rounded-lg">
-            <Stat label={tQ("totalRecords")} value={summary.total_records} />
-            <Stat label={tQ("ok")} value={summary.ok_count} color="#00C2A8" />
-            <Stat label={tQ("warning")} value={summary.warning_count} color="#F5A623" />
-            <Stat label={tQ("error")} value={summary.error_count} color="#EF4444" />
-          </div>
-        )}
-
-        {/* Error records table */}
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="px-5 py-3 border-b border-border">
-            <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
-              {tL("recentIssues")}
-            </h2>
-          </div>
-
-          {loading && (
-            <p className="font-mono text-sm text-muted p-5 animate-pulse">
-              {tC("loading")}
-            </p>
+        <div className="p-6 space-y-5">
+          {/* Summary strip */}
+          {summary && (
+            <div className="flex gap-6 p-4 bg-surface border border-border rounded-lg">
+              <Stat label={tQ("totalRecords")} value={summary.total_records} />
+              <Stat label={tQ("ok")} value={summary.ok_count} color="#00C2A8" />
+              <Stat label={tQ("warning")} value={summary.warning_count} color="#F5A623" />
+              <Stat label={tQ("error")} value={summary.error_count} color="#EF4444" />
+            </div>
           )}
 
-          {!loading && summary?.recent_errors.length === 0 && (
-            <p className="font-mono text-sm text-muted p-5">
-              {tL("noErrors")}
-            </p>
-          )}
+          {/* Error records table */}
+          <div className="bg-surface border border-border rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-border">
+              <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
+                {tL("recentIssues")}
+              </h2>
+            </div>
 
-          {!loading && summary && summary.recent_errors.length > 0 && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  {[tL("recordId"), tL("date"), tL("type"), tL("notes"), tL("flag")].map((h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-2.5 text-left font-sans text-xs text-muted uppercase tracking-wide"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {summary.recent_errors.map((row) => (
-                  <tr
-                    key={row.record_id}
-                    onClick={() => setSelectedId(row.record_id)}
-                    className="border-b border-border hover:bg-white/5 cursor-pointer transition-colors"
-                  >
-                    <td className="px-5 py-3 font-mono text-xs text-primary">
-                      {row.record_id.slice(0, 8)}…
-                    </td>
-                    <td className="px-5 py-3 font-mono text-xs text-foreground">
-                      {row.record_date}
-                    </td>
-                    <td className="px-5 py-3 font-sans text-xs text-foreground capitalize">
-                      {row.generation_type}
-                    </td>
-                    <td className="px-5 py-3 font-sans text-xs text-muted max-w-xs truncate">
-                      {row.quality_notes ?? "—"}
-                    </td>
-                    <td className="px-5 py-3">
-                      <QualityBadge flag="error" showLabel />
-                    </td>
+            {loading && <TableSkeleton />}
+
+            {!loading && summary?.recent_errors.length === 0 && (
+              <p className="font-mono text-sm text-muted p-5">
+                {tL("noErrors")}
+              </p>
+            )}
+
+            {!loading && summary && summary.recent_errors.length > 0 && (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    {[tL("recordId"), tL("date"), tL("type"), tL("notes"), tL("flag")].map((h) => (
+                      <th
+                        key={h}
+                        className="px-5 py-2.5 text-left font-sans text-xs text-muted uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {summary.recent_errors.map((row) => (
+                    <tr
+                      key={row.record_id}
+                      onClick={() => setSelectedId(row.record_id)}
+                      className="border-b border-border hover:bg-white/5 cursor-pointer transition-colors"
+                    >
+                      <td className="px-5 py-3 font-mono text-xs text-primary">
+                        {row.record_id.slice(0, 8)}…
+                      </td>
+                      <td className="px-5 py-3 font-mono text-xs text-foreground">
+                        {row.record_date}
+                      </td>
+                      <td className="px-5 py-3 font-sans text-xs text-foreground capitalize">
+                        {row.generation_type}
+                      </td>
+                      <td className="px-5 py-3 font-sans text-xs text-muted max-w-xs truncate">
+                        {row.quality_notes ?? "—"}
+                      </td>
+                      <td className="px-5 py-3">
+                        <QualityBadge flag="error" showLabel />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
-      </div>
+      </ErrorBoundary>
 
       <LineageSheet
         recordId={selectedId}

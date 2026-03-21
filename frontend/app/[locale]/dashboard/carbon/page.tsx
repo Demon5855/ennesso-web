@@ -7,6 +7,8 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { Topbar } from "@/components/layout/topbar";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ChartSkeleton } from "@/components/ui/skeletons";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { fetchCarbon } from "@/lib/api-client";
 import { useEnergyFormatter } from "@/hooks/use-energy-formatter";
@@ -50,37 +52,37 @@ export default function CarbonPage() {
   return (
     <div className="flex flex-col h-full">
       <Topbar title={tDash("carbon").toUpperCase()} />
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
-          <MetricCard label={t("co2Total")} value={loading ? "—" : fmt.co2(totalCo2)} subValue={tC("lifecycleEmissions")} />
-          <MetricCard label={t("co2Intensity")} value={loading ? "—" : avgIntensity.toFixed(1)} unit="kg/MWh" trend={avgIntensity < 100 ? "up" : "down"} />
-          <MetricCard label={t("co2Avoided")} value={loading ? "—" : fmt.co2(totalAvoided)} subValue={tC("vsThermal")} trend="up" />
-          <MetricCard label={t("avgRenewable")} value={loading ? "—" : fmt.percent(avgRenewable)} trend={avgRenewable > 0.7 ? "up" : "neutral"} />
-        </div>
+      <ErrorBoundary>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-4 gap-4">
+            <MetricCard label={t("co2Total")} value={loading ? "—" : fmt.co2(totalCo2)} subValue={tC("lifecycleEmissions")} />
+            <MetricCard label={t("co2Intensity")} value={loading ? "—" : avgIntensity.toFixed(1)} unit="kg/MWh" trend={avgIntensity < 100 ? "up" : "down"} />
+            <MetricCard label={t("co2Avoided")} value={loading ? "—" : fmt.co2(totalAvoided)} subValue={tC("vsThermal")} trend="up" />
+            <MetricCard label={t("avgRenewable")} value={loading ? "—" : fmt.percent(avgRenewable)} trend={avgRenewable > 0.7 ? "up" : "neutral"} />
+          </div>
 
-        <div className="bg-surface border border-border rounded-lg p-5">
-          <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
-            {tDash("carbonTrend")}
-          </h2>
-          {loading ? (
-            <div className="h-72 flex items-center justify-center">
-              <span className="font-mono text-sm text-muted animate-pulse">Loading…</span>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2D3A" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#6B7280", fontSize: 11, fontFamily: "IBM Plex Mono" }} axisLine={{ stroke: "#2A2D3A" }} tickLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: "#6B7280", fontSize: 11, fontFamily: "IBM Plex Mono" }} axisLine={false} tickLine={false} width={48} />
-                <Tooltip contentStyle={{ backgroundColor: "#1A1D27", border: "1px solid #2A2D3A", borderRadius: "6px", fontFamily: "IBM Plex Mono", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontFamily: "IBM Plex Sans", fontSize: 12, color: "#6B7280" }} />
-                <Line type="monotone" dataKey="intensity_kg_per_mwh" name={t("co2Intensity")} stroke={BRAND_COLORS.primary} strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="renewable_share" name={t("renewableShare")} stroke="#7ED321" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+          <div className="bg-surface border border-border rounded-lg p-5">
+            <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
+              {tDash("carbonTrend")}
+            </h2>
+            {loading ? (
+              <ChartSkeleton />
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2A2D3A" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fill: "#6B7280", fontSize: 11, fontFamily: "IBM Plex Mono" }} axisLine={{ stroke: "#2A2D3A" }} tickLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fill: "#6B7280", fontSize: 11, fontFamily: "IBM Plex Mono" }} axisLine={false} tickLine={false} width={48} />
+                  <Tooltip contentStyle={{ backgroundColor: "#1A1D27", border: "1px solid #2A2D3A", borderRadius: "6px", fontFamily: "IBM Plex Mono", fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontFamily: "IBM Plex Sans", fontSize: 12, color: "#6B7280" }} />
+                  <Line type="monotone" dataKey="intensity_kg_per_mwh" name={t("co2Intensity")} stroke={BRAND_COLORS.primary} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="renewable_share" name={t("renewableShare")} stroke="#7ED321" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
-      </div>
+      </ErrorBoundary>
     </div>
   );
 }

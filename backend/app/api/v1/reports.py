@@ -1,4 +1,8 @@
-"""Report generation endpoints — PDF and Excel exports."""
+"""Report generation endpoints — PDF and Excel exports.
+
+Wires the pdf_report.py and excel_report.py exporters to the FastAPI layer.
+Both endpoints fetch data from Supabase, build the report, and stream it.
+"""
 
 import io
 import logging
@@ -9,40 +13,78 @@ from fastapi.responses import StreamingResponse
 
 from app.db.client import SupabaseDep
 from app.models.responses import ReportRequest
+from app.services.carbon import (
+    calculate_avoided_emissions,
+    calculate_emissions,
+)
+from app.services.indicators import calculate_renewable_share
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _validate_report_request(req: ReportRequest) -> None:
-    """Raise HTTPException if the report request is invalid."""
-    if req.end_date < req.start_date:
-        raise HTTPException(
-            status_code=422,
-            detail=f"end_date ({req.end_date}) must be >= start_date ({req.start_date}).",
-        )
-    delta = (req.end_date - req.start_date).days
-    if delta > 366:
-        raise HTTPException(
-            status_code=422,
-            detail="Report range cannot exceed 366 days.",
-        )
+# ---------------------------------------------------------------------------
+# Shared data fetch helper
+# ---------------------------------------------------------------------------
 
 
-async def _fetch_generation_data(
-    client, start_date: date, end_date: date
-) -> list[dict]:
-    """Fetch aggregated daily generation for report use."""
-    response = (
-        await client.table("daily_balance")
-        .select("record_date, generation_type, total_mwh")
+async def _fetch_report_data(
+    client,
+    start_date: date,
+    end_date: date,
+) -> tuple[list[dict], list[dict], dict[str, float]]:
+    """Fetch energy records, lineage, and build generation_by_type pivot.
+
+    Returns:
+        Tuple of (energy_records, lineage_records, generation_by_type).
+    """
+    energy_resp = (
+        await client.table("energy_records")
+        .select("*")
         .eq("country_code", "EC")
         .gte("record_date", start_date.isoformat())
         .lte("record_date", end_date.isoformat())
         .order("record_date")
         .execute()
     )
-    return response.data or []
+    energy_records = energy_resp.data or []
+
+    # Build generation pivot
+    generation_by_type: dict[str, float] = {}
+    for row in energy_records:
+        gen_type = row.get("generation_type", "other")
+        mwh = float(row.get("value_mwh") or 0)
+        generation_by_type[gen_type] = generation_by_type.get(gen_type, 0) + mwh
+
+    # Fetch lineage for these record IDs
+    record_ids = [str(r["id"]) for r in energy_records]
+    lineage_records: list[dict] = []
+    if record_ids:
+        # Batch fetch in chunks of 100 (Supabase in() limit)
+        for i in range(0, len(record_ids), 100):
+            chunk = record_ids[i : i + 100]
+            lineage_resp = (
+                await client.table("data_lineage")
+                .select("*")
+                .in_("record_id", chunk)
+                .execute()
+            )
+            lineage_records.extend(lineage_resp.data or [])
+
+    return energy_records, lineage_records, generation_by_type
+
+
+def _validate_request(req: ReportRequest) -> None:
+    if req.end_date < req.start_date:
+        raise HTTPException(
+            status_code=422,
+            detail=f"end_date ({req.end_date}) must be >= start_date ({req.start_date}).",
+        )
+    if (req.end_date - req.start_date).days > 366:
+        raise HTTPException(
+            status_code=422,
+            detail="Report range cannot exceed 366 days.",
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -55,112 +97,53 @@ async def generate_excel_report(
     req: ReportRequest,
     client: SupabaseDep,
 ) -> StreamingResponse:
-    """Generate and stream an Excel report for the given date range.
+    """Generate and stream an Excel report (.xlsx).
 
-    Workbook contains:
-        - Sheet 1: Daily generation by source (MWh)
-        - Sheet 2: Carbon emissions summary
-
-    Args:
-        req: Report request with start_date, end_date.
-
-    Returns:
-        Streaming .xlsx file download.
+    Sheet 1: Summary metrics + generation by source.
+    Sheet 2: Raw energy_records for the period.
+    Sheet 3: Matching data_lineage records.
     """
-    _validate_report_request(req)
+    _validate_request(req)
 
-    try:
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
-    except ImportError:
-        raise HTTPException(
-            status_code=500,
-            detail="openpyxl is not installed. Run: pip install openpyxl",
-        )
+    energy_records, lineage_records, generation_by_type = (
+        await _fetch_report_data(client, req.start_date, req.end_date)
+    )
 
-    rows = await _fetch_generation_data(client, req.start_date, req.end_date)
-
-    if not rows:
+    if not energy_records:
         raise HTTPException(
             status_code=404,
             detail=f"No data found for {req.start_date} to {req.end_date}.",
         )
 
-    from app.services.carbon import calculate_emissions, calculate_avoided_emissions
+    total_mwh = sum(generation_by_type.values())
+    total_co2 = calculate_emissions(generation_by_type)
+    avoided = calculate_avoided_emissions(generation_by_type)
+    intensity = total_co2 / total_mwh if total_mwh > 0 else 0.0
+    try:
+        renewable_share = calculate_renewable_share(generation_by_type)
+    except ValueError:
+        renewable_share = 0.0
 
-    # Build daily pivot
-    daily: dict[str, dict[str, float]] = {}
-    for row in rows:
-        d = row["record_date"]
-        gen_type = row.get("generation_type", "other")
-        mwh = float(row.get("total_mwh") or 0)
-        if d not in daily:
-            daily[d] = {}
-        daily[d][gen_type] = daily[d].get(gen_type, 0) + mwh
+    from app.exporters.excel_report import generate_excel
 
-    wb = openpyxl.Workbook()
-
-    # -- Sheet 1: Generation --
-    ws_gen = wb.active
-    ws_gen.title = "Generation"
-
-    header_fill = PatternFill("solid", fgColor="1A1D27")
-    header_font = Font(bold=True, color="00C2A8")
-
-    headers = ["Date", "Hydraulic (MWh)", "Thermal (MWh)", "Solar (MWh)",
-               "Wind (MWh)", "Biomass (MWh)", "Other (MWh)", "Total (MWh)"]
-    for col, h in enumerate(headers, 1):
-        cell = ws_gen.cell(row=1, column=col, value=h)
-        cell.font = header_font
-        cell.fill = header_fill
-
-    for row_idx, (d, mix) in enumerate(sorted(daily.items()), 2):
-        total = sum(mix.values())
-        ws_gen.cell(row=row_idx, column=1, value=d)
-        ws_gen.cell(row=row_idx, column=2, value=round(mix.get("hydraulic", 0), 2))
-        ws_gen.cell(row=row_idx, column=3, value=round(mix.get("thermal", 0), 2))
-        ws_gen.cell(row=row_idx, column=4, value=round(mix.get("solar", 0), 2))
-        ws_gen.cell(row=row_idx, column=5, value=round(mix.get("wind", 0), 2))
-        ws_gen.cell(row=row_idx, column=6, value=round(mix.get("biomass", 0), 2))
-        ws_gen.cell(row=row_idx, column=7, value=round(mix.get("other", 0), 2))
-        ws_gen.cell(row=row_idx, column=8, value=round(total, 2))
-
-    for col in range(1, 9):
-        ws_gen.column_dimensions[
-            openpyxl.utils.get_column_letter(col)
-        ].width = 18
-
-    # -- Sheet 2: Carbon --
-    ws_carbon = wb.create_sheet("Carbon")
-    carbon_headers = ["Date", "Total CO₂ (kg)", "Intensity (kg/MWh)", "Avoided CO₂ (kg)"]
-    for col, h in enumerate(carbon_headers, 1):
-        cell = ws_carbon.cell(row=1, column=col, value=h)
-        cell.font = header_font
-        cell.fill = header_fill
-
-    for row_idx, (d, mix) in enumerate(sorted(daily.items()), 2):
-        total_mwh = sum(mix.values())
-        co2 = calculate_emissions(mix)
-        avoided = calculate_avoided_emissions(mix)
-        intensity = co2 / total_mwh if total_mwh > 0 else 0.0
-        ws_carbon.cell(row=row_idx, column=1, value=d)
-        ws_carbon.cell(row=row_idx, column=2, value=round(co2, 2))
-        ws_carbon.cell(row=row_idx, column=3, value=round(intensity, 4))
-        ws_carbon.cell(row=row_idx, column=4, value=round(avoided, 2))
-
-    for col in range(1, 5):
-        ws_carbon.column_dimensions[
-            openpyxl.utils.get_column_letter(col)
-        ].width = 20
-
-    # Stream to client
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
+    xlsx_bytes = generate_excel(
+        start_date=req.start_date,
+        end_date=req.end_date,
+        energy_records=energy_records,
+        lineage_records=lineage_records,
+        generation_by_type=generation_by_type,
+        metrics_summary={
+            "total_mwh": total_mwh,
+            "renewable_share": renewable_share,
+            "total_co2_kg": total_co2,
+            "avoided_co2_kg": avoided,
+            "avg_intensity": intensity,
+        },
+    )
 
     filename = f"ennesso_report_{req.start_date}_{req.end_date}.xlsx"
     return StreamingResponse(
-        buffer,
+        io.BytesIO(xlsx_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
@@ -176,135 +159,67 @@ async def generate_pdf_report(
     req: ReportRequest,
     client: SupabaseDep,
 ) -> StreamingResponse:
-    """Generate and stream a PDF summary report.
+    """Generate and stream a PDF report.
 
-    Contains: title page, generation table, carbon summary.
-    Lineage audit section included if ``include_lineage=True``.
-
-    Args:
-        req: Report request with start_date, end_date, include_lineage.
-
-    Returns:
-        Streaming .pdf file download.
+    Sections: header, Claude narrative, summary table,
+    generation mix chart, data quality, footer.
     """
-    _validate_report_request(req)
+    _validate_request(req)
 
-    try:
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.lib.units import cm
-        from reportlab.platypus import (
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
-    except ImportError:
-        raise HTTPException(
-            status_code=500,
-            detail="reportlab is not installed. Run: pip install reportlab",
-        )
+    energy_records, _, generation_by_type = (
+        await _fetch_report_data(client, req.start_date, req.end_date)
+    )
 
-    rows = await _fetch_generation_data(client, req.start_date, req.end_date)
-
-    if not rows:
+    if not energy_records:
         raise HTTPException(
             status_code=404,
             detail=f"No data found for {req.start_date} to {req.end_date}.",
         )
 
-    from app.services.carbon import calculate_emissions, calculate_avoided_emissions
+    total_mwh = sum(generation_by_type.values())
+    total_co2 = calculate_emissions(generation_by_type)
+    avoided = calculate_avoided_emissions(generation_by_type)
+    intensity = total_co2 / total_mwh if total_mwh > 0 else 0.0
+    try:
+        renewable_share = calculate_renewable_share(generation_by_type)
+    except ValueError:
+        renewable_share = 0.0
 
-    # Build daily pivot
-    daily: dict[str, dict[str, float]] = {}
-    for row in rows:
-        d = row["record_date"]
-        gen_type = row.get("generation_type", "other")
-        mwh = float(row.get("total_mwh") or 0)
-        if d not in daily:
-            daily[d] = {}
-        daily[d][gen_type] = daily[d].get(gen_type, 0) + mwh
+    hydraulic_mwh = generation_by_type.get("hydraulic", 0.0)
+    thermal_mwh = generation_by_type.get("thermal", 0.0)
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2 * cm)
-    styles = getSampleStyleSheet()
-    story = []
+    ok_count = sum(1 for r in energy_records if r.get("quality_flag") == "ok")
+    warning_count = sum(1 for r in energy_records if r.get("quality_flag") == "warning")
+    error_count = sum(1 for r in energy_records if r.get("quality_flag") == "error")
 
-    # Title
-    story.append(Paragraph(
-        f"<b>Ennesso Energy Report</b>",
-        styles["Title"]
-    ))
-    story.append(Paragraph(
-        f"Period: {req.start_date} to {req.end_date} | Country: EC",
-        styles["Normal"]
-    ))
-    story.append(Spacer(1, 0.5 * cm))
+    from app.services.claude_reports import ReportMetrics
+    from app.exporters.pdf_report import generate_pdf
 
-    # Generation table
-    story.append(Paragraph("<b>Daily Generation (MWh)</b>", styles["Heading2"]))
-    story.append(Spacer(1, 0.2 * cm))
+    metrics = ReportMetrics(
+        start_date=req.start_date.isoformat(),
+        end_date=req.end_date.isoformat(),
+        total_mwh=total_mwh,
+        hydraulic_mwh=hydraulic_mwh,
+        thermal_mwh=thermal_mwh,
+        renewable_share=renewable_share,
+        total_co2_kg=total_co2,
+        avoided_co2_kg=avoided,
+        avg_intensity_kg_per_mwh=intensity,
+        ok_count=ok_count,
+        warning_count=warning_count,
+        error_count=error_count,
+    )
 
-    table_data = [["Date", "Hydraulic", "Thermal", "Solar", "Wind", "Total"]]
-    for d, mix in sorted(daily.items()):
-        total = sum(mix.values())
-        table_data.append([
-            d,
-            f"{mix.get('hydraulic', 0):,.1f}",
-            f"{mix.get('thermal', 0):,.1f}",
-            f"{mix.get('solar', 0):,.1f}",
-            f"{mix.get('wind', 0):,.1f}",
-            f"{total:,.1f}",
-        ])
-
-    tbl = Table(table_data, repeatRows=1)
-    tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1A1D27")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#00C2A8")),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F5F5F5")]),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-    ]))
-    story.append(tbl)
-    story.append(Spacer(1, 0.5 * cm))
-
-    # Carbon summary
-    story.append(Paragraph("<b>Carbon Summary</b>", styles["Heading2"]))
-    story.append(Spacer(1, 0.2 * cm))
-
-    total_co2 = sum(calculate_emissions(mix) for mix in daily.values())
-    total_avoided = sum(calculate_avoided_emissions(mix) for mix in daily.values())
-    total_gen = sum(sum(mix.values()) for mix in daily.values())
-    avg_intensity = total_co2 / total_gen if total_gen > 0 else 0.0
-
-    carbon_data = [
-        ["Metric", "Value"],
-        ["Total CO₂ Emissions", f"{total_co2:,.0f} kg"],
-        ["Avg Carbon Intensity", f"{avg_intensity:.2f} kg/MWh"],
-        ["Total CO₂ Avoided vs Thermal", f"{total_avoided:,.0f} kg"],
-        ["Total Generation", f"{total_gen:,.1f} MWh"],
-    ]
-    carbon_tbl = Table(carbon_data)
-    carbon_tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1A1D27")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#00C2A8")),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-    ]))
-    story.append(carbon_tbl)
-
-    doc.build(story)
-    buffer.seek(0)
+    pdf_bytes = await generate_pdf(
+        start_date=req.start_date,
+        end_date=req.end_date,
+        generation_by_type=generation_by_type,
+        metrics=metrics,
+    )
 
     filename = f"ennesso_report_{req.start_date}_{req.end_date}.pdf"
     return StreamingResponse(
-        buffer,
+        io.BytesIO(pdf_bytes),
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )

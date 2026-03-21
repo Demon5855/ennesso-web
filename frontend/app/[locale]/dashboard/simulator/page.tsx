@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { cn } from "@/lib/utils";
 import { GENERATION_COLORS } from "@/lib/chart-colors";
@@ -104,127 +105,128 @@ export default function SimulatorPage() {
   return (
     <div className="flex flex-col h-full">
       <Topbar title={t("title").toUpperCase()} />
+      <ErrorBoundary>
+        <div className="p-6 space-y-6">
+          <p className="font-sans text-sm text-muted">
+            {t("description")}
+            {" "}Reference total: {fmt.compact(TOTAL_MWH)} MWh.
+          </p>
 
-      <div className="p-6 space-y-6">
-        <p className="font-sans text-sm text-muted">
-          {t("description")}
-          {" "}Reference total: {fmt.compact(TOTAL_MWH)} MWh.
-        </p>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Sliders */}
+            <div className="bg-surface border border-border rounded-lg p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
+                  {t("generationMix")}
+                </h2>
+                <span
+                  className={cn(
+                    "font-mono text-xs",
+                    isBalanced ? "text-[#00C2A8]" : "text-[#F5A623]"
+                  )}
+                >
+                  {total.toFixed(1)}% {isBalanced ? "✓" : t("adjustToBalance")}
+                </span>
+              </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          {/* Sliders */}
-          <div className="bg-surface border border-border rounded-lg p-5 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
-                {t("generationMix")}
-              </h2>
-              <span
-                className={cn(
-                  "font-mono text-xs",
-                  isBalanced ? "text-[#00C2A8]" : "text-[#F5A623]"
-                )}
-              >
-                {total.toFixed(1)}% {isBalanced ? "✓" : t("adjustToBalance")}
-              </span>
-            </div>
-
-            {SOURCES.map((source) => (
-              <div key={source} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-sm"
-                      style={{ backgroundColor: GENERATION_COLORS[source] }}
-                    />
-                    <span className="font-sans text-sm text-foreground">
-                      {tType(source)}
+              {SOURCES.map((source) => (
+                <div key={source} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-sm"
+                        style={{ backgroundColor: GENERATION_COLORS[source] }}
+                      />
+                      <span className="font-sans text-sm text-foreground">
+                        {tType(source)}
+                      </span>
+                    </div>
+                    <span className="font-mono text-sm text-foreground w-12 text-right">
+                      {(mix[source] ?? 0).toFixed(1)}%
                     </span>
                   </div>
-                  <span className="font-mono text-sm text-foreground w-12 text-right">
-                    {(mix[source] ?? 0).toFixed(1)}%
-                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={mix[source]}
+                    onChange={(e) =>
+                      handleSlider(source, parseFloat(e.target.value))
+                    }
+                    className="w-full accent-primary h-1.5"
+                    style={{ accentColor: GENERATION_COLORS[source] }}
+                  />
                 </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  value={mix[source]}
-                  onChange={(e) =>
-                    handleSlider(source, parseFloat(e.target.value))
-                  }
-                  className="w-full accent-primary h-1.5"
-                  style={{ accentColor: GENERATION_COLORS[source] }}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Results */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <MetricCard
-                label={tM("co2Total")}
-                value={fmt.co2(results.totalCo2)}
-                subValue={tC("lifecycleEmissions")}
-              />
-              <MetricCard
-                label={tM("co2Avoided")}
-                value={fmt.co2(results.avoided)}
-                subValue={tC("vsThermal")}
-                trend="up"
-              />
-              <MetricCard
-                label={t("carbonIntensity")}
-                value={results.intensity.toFixed(1)}
-                unit="kg/MWh"
-                trend={results.intensity < 100 ? "up" : "down"}
-              />
-              <MetricCard
-                label={t("avgLcoe")}
-                value={results.avgLcoe.toFixed(1)}
-                unit="USD/MWh"
-                subValue={t("approxEcuador")}
-              />
+              ))}
             </div>
 
-            <div className="bg-surface border border-border rounded-lg p-5">
-              <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
-                {t("renewableShare")}
-              </h2>
-              <div className="flex items-end gap-3">
-                <span className="font-mono text-4xl font-semibold text-primary">
-                  {fmt.percent(results.renewableShare)}
-                </span>
-                <span className="font-sans text-xs text-muted mb-2">
-                  {tC("renewableComposition")}
-                </span>
+            {/* Results */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <MetricCard
+                  label={tM("co2Total")}
+                  value={fmt.co2(results.totalCo2)}
+                  subValue={tC("lifecycleEmissions")}
+                />
+                <MetricCard
+                  label={tM("co2Avoided")}
+                  value={fmt.co2(results.avoided)}
+                  subValue={tC("vsThermal")}
+                  trend="up"
+                />
+                <MetricCard
+                  label={t("carbonIntensity")}
+                  value={results.intensity.toFixed(1)}
+                  unit="kg/MWh"
+                  trend={results.intensity < 100 ? "up" : "down"}
+                />
+                <MetricCard
+                  label={t("avgLcoe")}
+                  value={results.avgLcoe.toFixed(1)}
+                  unit="USD/MWh"
+                  subValue={t("approxEcuador")}
+                />
               </div>
 
-              {/* Bar */}
-              <div className="mt-4 h-3 bg-background rounded-full overflow-hidden">
-                {SOURCES.filter((s) => s !== "thermal").map((source) => (
-                  <div
-                    key={source}
-                    className="h-full inline-block"
-                    style={{
-                      width: `${mix[source] ?? 0}%`,
-                      backgroundColor: GENERATION_COLORS[source],
-                    }}
-                  />
-                ))}
-              </div>
+              <div className="bg-surface border border-border rounded-lg p-5">
+                <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
+                  {t("renewableShare")}
+                </h2>
+                <div className="flex items-end gap-3">
+                  <span className="font-mono text-4xl font-semibold text-primary">
+                    {fmt.percent(results.renewableShare)}
+                  </span>
+                  <span className="font-sans text-xs text-muted mb-2">
+                    {tC("renewableComposition")}
+                  </span>
+                </div>
 
-              {/* Emission reference */}
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="font-sans text-xs text-muted">
-                  {t("emissionFootnote")}
-                </p>
+                {/* Bar */}
+                <div className="mt-4 h-3 bg-background rounded-full overflow-hidden">
+                  {SOURCES.filter((s) => s !== "thermal").map((source) => (
+                    <div
+                      key={source}
+                      className="h-full inline-block"
+                      style={{
+                        width: `${mix[source] ?? 0}%`,
+                        backgroundColor: GENERATION_COLORS[source],
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Emission reference */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="font-sans text-xs text-muted">
+                    {t("emissionFootnote")}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </ErrorBoundary>
     </div>
   );
 }

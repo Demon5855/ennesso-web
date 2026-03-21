@@ -6,6 +6,8 @@ import { Topbar } from "@/components/layout/topbar";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { AreaStackedChart } from "@/components/charts/area-stacked-chart";
 import { DonutChart } from "@/components/charts/donut-chart";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { DashboardSkeleton } from "@/components/ui/skeletons";
 import { fetchEnergyBalance, fetchEnergyMix, fetchCarbon } from "@/lib/api-client";
 import { useEnergyFormatter } from "@/hooks/use-energy-formatter";
 import { useDateRange } from "@/hooks/use-date-range";
@@ -65,91 +67,95 @@ export default function OverviewPage() {
   return (
     <div className="flex flex-col h-full">
       <Topbar title={tDash("overview").toUpperCase()} />
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
-          <MetricCard
-            label={t("totalGeneration")}
-            value={loading ? "—" : fmt.compact(totalMwh)}
-            unit="MWh"
-            subValue={`${startDate} → ${endDate}`}
-          />
-          <MetricCard
-            label={t("renewableShare")}
-            value={loading ? "—" : fmt.percent(renewableShare)}
-            subValue={tC("renewableComposition")}
-            trend={renewableShare > 0.7 ? "up" : "neutral"}
-          />
-          <MetricCard
-            label={t("co2Intensity")}
-            value={loading ? "—" : avgIntensity.toFixed(1)}
-            unit="kg/MWh"
-            subValue={tC("ipccFactors")}
-            trend={avgIntensity < 100 ? "up" : "down"}
-          />
-          <MetricCard
-            label={t("co2Avoided")}
-            value={loading ? "—" : fmt.co2(totalAvoided)}
-            subValue={tC("vsThermalBaseline")}
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 bg-surface border border-border rounded-lg p-5">
-            <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
-              {tDash("generationMix")}
-            </h2>
-            {loading ? (
-              <div className="h-80 flex items-center justify-center">
-                <span className="font-mono text-sm text-muted animate-pulse">Loading…</span>
-              </div>
-            ) : (
-              <AreaStackedChart
-                data={balance}
-                height={300}
-                labels={{
-                  hydraulic: tType("hydraulic"),
-                  thermal: tType("thermal"),
-                  solar: tType("solar"),
-                  wind: tType("wind"),
-                  biomass: tType("biomass"),
-                }}
+      <ErrorBoundary>
+        {loading ? <DashboardSkeleton /> : (
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-4 gap-4">
+              <MetricCard
+                label={t("totalGeneration")}
+                value={loading ? "—" : fmt.compact(totalMwh)}
+                unit="MWh"
+                subValue={`${startDate} → ${endDate}`}
               />
-            )}
-          </div>
+              <MetricCard
+                label={t("renewableShare")}
+                value={loading ? "—" : fmt.percent(renewableShare)}
+                subValue={tC("renewableComposition")}
+                trend={renewableShare > 0.7 ? "up" : "neutral"}
+              />
+              <MetricCard
+                label={t("co2Intensity")}
+                value={loading ? "—" : avgIntensity.toFixed(1)}
+                unit="kg/MWh"
+                subValue={tC("ipccFactors")}
+                trend={avgIntensity < 100 ? "up" : "down"}
+              />
+              <MetricCard
+                label={t("co2Avoided")}
+                value={loading ? "—" : fmt.co2(totalAvoided)}
+                subValue={tC("vsThermalBaseline")}
+              />
+            </div>
 
-          <div className="bg-surface border border-border rounded-lg p-5">
-            <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
-              {tDash("currentMix")}
-            </h2>
-            {loading || !mix ? (
-              <div className="h-80 flex items-center justify-center">
-                <span className="font-mono text-sm text-muted animate-pulse">Loading…</span>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 bg-surface border border-border rounded-lg p-5">
+                <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
+                  {tDash("generationMix")}
+                </h2>
+                {loading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <span className="font-mono text-sm text-muted animate-pulse">Loading…</span>
+                  </div>
+                ) : (
+                  <AreaStackedChart
+                    data={balance}
+                    height={300}
+                    labels={{
+                      hydraulic: tType("hydraulic"),
+                      thermal: tType("thermal"),
+                      solar: tType("solar"),
+                      wind: tType("wind"),
+                      biomass: tType("biomass"),
+                    }}
+                  />
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col items-center gap-4 pt-4">
-                <DonutChart
-                  data={mix}
-                  size={180}
-                  labels={{
-                    hydraulic: tType("hydraulic"),
-                    thermal: tType("thermal"),
-                    solar: tType("solar"),
-                    wind: tType("wind"),
-                    biomass: tType("biomass"),
-                    other: tType("other"),
-                  }}
-                />
-                <div className="text-center">
-                  <p className="font-mono text-2xl font-semibold text-foreground">
-                    {fmt.compact(mix.total_mwh)}
-                  </p>
-                  <p className="font-sans text-xs text-muted mt-1">{tC("mwhOn", { date: mix.date })}</p>
-                </div>
+
+              <div className="bg-surface border border-border rounded-lg p-5">
+                <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
+                  {tDash("currentMix")}
+                </h2>
+                {loading || !mix ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <span className="font-mono text-sm text-muted animate-pulse">Loading…</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-4 pt-4">
+                    <DonutChart
+                      data={mix}
+                      size={180}
+                      labels={{
+                        hydraulic: tType("hydraulic"),
+                        thermal: tType("thermal"),
+                        solar: tType("solar"),
+                        wind: tType("wind"),
+                        biomass: tType("biomass"),
+                        other: tType("other"),
+                      }}
+                    />
+                    <div className="text-center">
+                      <p className="font-mono text-2xl font-semibold text-foreground">
+                        {fmt.compact(mix.total_mwh)}
+                      </p>
+                      <p className="font-sans text-xs text-muted mt-1">{tC("mwhOn", { date: mix.date })}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      </ErrorBoundary>
     </div>
   );
 }
