@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import {
   BarChart2,
   Zap,
@@ -13,6 +14,7 @@ import {
   FileText,
   GitBranch,
   Activity,
+  LogOut,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -28,6 +30,13 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const t = useTranslations("dashboard");
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/auth/sign-in");
+  }
 
   return (
     <aside className="w-56 flex-shrink-0 bg-surface border-r border-border flex flex-col h-screen sticky top-0">
@@ -67,8 +76,18 @@ export function Sidebar() {
         })}
       </nav>
 
+      <div className="px-5 py-4 border-border space-y-3">
+        <button
+          onClick={() => void handleSignOut()}
+          className="flex items-center gap-2 text-muted hover:text-red-500 transition-colors w-full"
+        >
+          <LogOut size={13} className="text-red-500" />
+          <span className="font-sans text-xs">Sign out</span>
+        </button>
+      </div>
+
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-border">
+      <div className="px-5 py-4 border-t border-border space-y-3">
         <div className="flex items-center gap-2">
           <Activity size={12} className="text-[#00C2A8]" />
           <span className="font-mono text-xs text-muted">EC · Live</span>
