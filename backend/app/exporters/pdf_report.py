@@ -149,14 +149,19 @@ async def generate_pdf(
         bottomMargin=2 * cm,
         leftMargin=2 * cm,
         rightMargin=2 * cm,
+        title=f"Ennesso — Energy Balance Report {start_date} / {end_date}",
+        author="Ennesso / Perennia Systems",
+        subject="Ecuador SNI Energy Balance",
+        creator="Ennesso v0.1.0",
     )
 
-    rl_dark_bg = colors.HexColor("#1A1D27")
+    rl_dark_bg = colors.HexColor("#1A1D27")   # just for the header
     rl_teal = colors.HexColor("#00C2A8")
-    rl_muted = colors.HexColor("#6B7280")
-    rl_text = colors.HexColor("#E8EAF0")
-    rl_border = colors.HexColor("#2A2D3A")
-    rl_bg = colors.HexColor("#0F1117")
+    rl_text = colors.HexColor("#1A1A1A")       # black for body
+    rl_muted = colors.HexColor("#555555")      # gray for notes
+    rl_border = colors.HexColor("#DDDDDD")     # soft border
+    rl_row_alt = colors.HexColor("#F9F9F9")    # alternate row
+    rl_white = colors.white
 
     styles = getSampleStyleSheet()
     heading2 = ParagraphStyle(
@@ -167,18 +172,18 @@ async def generate_pdf(
         spaceAfter=6,
     )
     body_style = ParagraphStyle(
-        "BodyEnnesso",
-        fontName="Helvetica",
-        fontSize=8.5,
-        textColor=rl_text,
-        leading=13,
-        spaceAfter=4,
+    "BodyEnnesso",
+    fontName="Helvetica",
+    fontSize=8.5,
+    textColor=colors.HexColor("#1A1A1A"),  # black
+    leading=13,
+    spaceAfter=4,
     )
     muted_style = ParagraphStyle(
         "MutedEnnesso",
         fontName="Helvetica",
         fontSize=7.5,
-        textColor=rl_muted,
+        textColor=colors.HexColor("#555555"),  # gray
     )
 
     story = []
@@ -188,11 +193,11 @@ async def generate_pdf(
     # -------------------------------------------------------------------------
     header_data = [[
         Paragraph(
-            '<font name="Helvetica-Bold" size="16" color="#00C2A8">ennesso</font>',
+            '<font name="Helvetica-Bold" size="18" color="#00C2A8">ENNESSO</font>',
             styles["Normal"]
         ),
         Paragraph(
-            f'<font name="Helvetica" size="8" color="#6B7280">'
+            f'<font name="Helvetica" size="9" color="#E8EAF0">'
             f'Energy Balance Report<br/>'
             f'{start_date} — {end_date}</font>',
             styles["Normal"]
@@ -201,10 +206,12 @@ async def generate_pdf(
     header_tbl = Table(header_data, colWidths=["50%", "50%"])
     header_tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), rl_dark_bg),
-        ("TOPPADDING", (0, 0), (-1, -1), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 18),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 18),
+        ("LEFTPADDING", (0, 0), (-1, -1), 16),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+        ("RIGHTPADDING", (1, 0), (1, 0), 16),
     ]))
     story.append(header_tbl)
     story.append(Spacer(1, 0.4 * cm))
@@ -225,28 +232,27 @@ async def generate_pdf(
 
     renewable_pct = f"{metrics.renewable_share * 100:.1f}%"
     total_gwh = f"{metrics.total_mwh / 1000:,.1f} GWh"
-    co2_tonnes = f"{metrics.total_co2_kg / 1000:,.0f} t CO₂"
-    avoided_tonnes = f"{metrics.avoided_co2_kg / 1000:,.0f} t CO₂"
+    co2_tonnes = f"{metrics.total_co2_kg / 1000:,.0f} t CO2"
+    avoided_tonnes = f"{metrics.avoided_co2_kg / 1000:,.0f} t CO2"
     intensity = f"{metrics.avg_intensity_kg_per_mwh:.1f} kg/MWh"
 
     summary_data = [
         ["Metric", "Value", "Notes"],
         ["Total Generation", total_gwh, f"{start_date} – {end_date}"],
         ["Renewable Share", renewable_pct, "Hydraulic + Solar + Wind + Biomass"],
-        ["CO₂ Emissions", co2_tonnes, "IPCC AR5 lifecycle factors"],
-        ["CO₂ Avoided", avoided_tonnes, "vs 100% thermal baseline"],
+        ["CO2 Emissions", co2_tonnes, "IPCC AR5 lifecycle factors"],
+        ["CO2 Avoided", avoided_tonnes, "vs 100% thermal baseline"],
         ["Carbon Intensity", intensity, "Average across mix"],
     ]
 
     summary_tbl = Table(summary_data, colWidths=["40%", "25%", "35%"])
     summary_tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), rl_dark_bg),
-        ("TEXTCOLOR", (0, 0), (-1, 0), rl_teal),
+        ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#1A1A1A")),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("TEXTCOLOR", (0, 1), (-1, -1), rl_text),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-         [colors.HexColor("#0F1117"), colors.HexColor("#13161F")]),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9F9F9")]),
         ("GRID", (0, 0), (-1, -1), 0.3, rl_border),
         ("TOPPADDING", (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
@@ -282,17 +288,24 @@ async def generate_pdf(
     quality_tbl = Table(quality_data, colWidths=["40%", "30%", "30%"])
     quality_tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), rl_dark_bg),
-        ("TEXTCOLOR", (0, 0), (-1, 0), rl_teal),
+        ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#1A1A1A")),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("TEXTCOLOR", (0, 1), (-1, -1), rl_text),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("GRID", (0, 0), (-1, -1), 0.3, rl_border),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9F9F9")]),
     ]))
     story.append(quality_tbl)
-    story.append(Spacer(1, 0.5 * cm))
+    story.append(Spacer(1, 0.15 * cm))
+    story.append(Paragraph(
+        "Note: 'Warning' flags on historical records indicate data age > 7 days "
+        "(late-ingestion check), not measurement quality issues. "
+        "This reflects the validation system working as designed.",
+        muted_style
+    ))
 
     # -------------------------------------------------------------------------
     # Footer

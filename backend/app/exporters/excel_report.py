@@ -36,7 +36,7 @@ def _auto_width(ws, min_width: int = 10, max_width: int = 50) -> None:
         )
 
 
-def _apply_header_style(cell, fill_color: str = "1A1D27") -> None:
+def _apply_header_style(cell, fill_color: str = "00C2A8") -> None:
     """Apply Ennesso header styling to a cell.
 
     Args:
@@ -45,7 +45,7 @@ def _apply_header_style(cell, fill_color: str = "1A1D27") -> None:
     """
     from openpyxl.styles import Font, PatternFill, Alignment
 
-    cell.font = Font(bold=True, color="00C2A8", size=10)
+    cell.font = Font(bold=True, color="FFFFFF", size=10)
     cell.fill = PatternFill("solid", fgColor=fill_color)
     cell.alignment = Alignment(horizontal="left", vertical="center")
 
@@ -57,11 +57,12 @@ def _apply_row_style(cell, row_idx: int) -> None:
         cell: openpyxl cell object.
         row_idx: 1-based row index.
     """
-    from openpyxl.styles import PatternFill, Font
+    from openpyxl.styles import PatternFill, Font, Alignment
 
-    color = "0F1117" if row_idx % 2 == 0 else "13161F"
+    color = "F9F9F9" if row_idx % 2 == 0 else "FFFFFF"
     cell.fill = PatternFill("solid", fgColor=color)
-    cell.font = Font(color="E8EAF0", size=9)
+    cell.font = Font(color="1A1A1A", size=9)
+    cell.alignment = Alignment(vertical="center")
 
 
 def generate_excel(

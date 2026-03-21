@@ -26,9 +26,9 @@ class ReportMetrics:
         hydraulic_mwh: Hydraulic generation in MWh.
         thermal_mwh: Thermal generation in MWh.
         renewable_share: Renewable share as decimal (0-1).
-        total_co2_kg: Total lifecycle CO₂ in kg.
-        avoided_co2_kg: CO₂ avoided vs 100% thermal baseline in kg.
-        avg_intensity_kg_per_mwh: Average carbon intensity (kg CO₂/MWh).
+        total_co2_kg: Total lifecycle CO2 in kg.
+        avoided_co2_kg: CO2 avoided vs 100% thermal baseline in kg.
+        avg_intensity_kg_per_mwh: Average carbon intensity (kg CO2/MWh).
         ok_count: Records with quality flag 'ok'.
         warning_count: Records with quality flag 'warning'.
         error_count: Records with quality flag 'error'.
@@ -72,8 +72,8 @@ Key metrics:
 - Hydraulic generation: {metrics.hydraulic_mwh / 1000:,.1f} GWh
 - Thermal generation: {metrics.thermal_mwh / 1000:,.1f} GWh
 - Renewable share: {renewable_pct:.1f}%
-- Average carbon intensity: {metrics.avg_intensity_kg_per_mwh:.1f} kg CO₂/MWh
-- CO₂ avoided vs 100% thermal baseline: {avoided_tonnes:,.0f} tonnes CO₂
+- Average carbon intensity: {metrics.avg_intensity_kg_per_mwh:.1f} kg CO2/MWh
+- CO2 avoided vs 100% thermal baseline: {avoided_tonnes:,.0f} tonnes CO2
 - Data quality: {metrics.ok_count} valid records, {metrics.warning_count} warnings, \
 {metrics.error_count} errors
 
@@ -84,7 +84,8 @@ Instructions:
   means for Ecuador's energy transition and climate commitments.
 - Professional tone, suitable for an ESG or regulatory report.
 - Do not use bullet points. Do not use headers. Plain prose only.
-- Keep each paragraph to 3-4 sentences maximum."""
+- Keep each paragraph to 3-4 sentences maximum.
+- Write 'CO2' not 'CO₂' — the subscript character does not render in PDF."""
 
 
 async def generate_narrative(metrics: ReportMetrics) -> str:
@@ -150,9 +151,9 @@ def _fallback_narrative(metrics: ReportMetrics) -> str:
         f"dependence on hydroelectric resources and their sensitivity to seasonal "
         f"hydrological conditions.\n\n"
         f"From a carbon perspective, the generation mix produced an average intensity "
-        f"of {metrics.avg_intensity_kg_per_mwh:.1f} kg CO₂/MWh on a lifecycle basis "
+        f"of {metrics.avg_intensity_kg_per_mwh:.1f} kg CO2/MWh on a lifecycle basis "
         f"(IPCC AR5 factors), avoiding approximately {avoided_tonnes:,.0f} tonnes of "
-        f"CO₂ compared to a hypothetical 100% thermal baseline. These avoided emissions "
+        f"CO2 compared to a hypothetical 100% thermal baseline. These avoided emissions "
         f"underscore the climate value of Ecuador's hydroelectric infrastructure and "
         f"highlight the importance of protecting watershed capacity as part of the "
         f"country's long-term decarbonisation strategy."
