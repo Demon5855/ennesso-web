@@ -5,7 +5,6 @@ import { defineRouting } from "next-intl/routing";
 
 const routing = defineRouting({
   locales: ["es", "en", "it"],
-  // Default locale (no prefix for Spanish)
   defaultLocale: "es",
   localePrefix: "as-needed",
 });
@@ -15,17 +14,24 @@ const intlMiddleware = createMiddleware(routing);
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Redirect /dashboard/* → /es/dashboard/* (insert default locale)
-  if (pathname.startsWith("/dashboard") && !pathname.startsWith("/es/") && !pathname.startsWith("/en/") && !pathname.startsWith("/it/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/es${pathname}`;
-    return NextResponse.redirect(url);
-  }
+  // Always run intl middleware first so it sets the x-next-intl-locale header.
+  // If it issues a redirect (e.g. normalizing the locale prefix), respect it immediately.
+  const intlResponse = intlMiddleware(request);
+  if (intlResponse.status !== 200) return intlResponse;
 
   const isDashboard = pathname.includes("/dashboard");
 
   if (isDashboard) {
-    let supabaseResponse = NextResponse.next({ request });
+    // Build the base response, carrying forward the intl headers
+    // so that requestLocale in i18n/request.ts resolves correctly.
+    const supabaseInit = { request };
+    let supabaseResponse = NextResponse.next(supabaseInit);
+
+    // Copy all headers set by intlMiddleware onto supabaseResponse
+    intlResponse.headers.forEach((value, key) => {
+      supabaseResponse.headers.set(key, value);
+    });
+
     const supabase = createServerClient(
       process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
       process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]!,
@@ -34,7 +40,11 @@ export default async function middleware(request: NextRequest) {
           getAll() { return request.cookies.getAll(); },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-            supabaseResponse = NextResponse.next({ request });
+            supabaseResponse = NextResponse.next(supabaseInit);
+            // Re-copy intl headers after supabaseResponse is re-created
+            intlResponse.headers.forEach((value, key) => {
+              supabaseResponse.headers.set(key, value);
+            });
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             );
@@ -42,21 +52,20 @@ export default async function middleware(request: NextRequest) {
         },
       }
     );
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/auth/sign-in";
       return NextResponse.redirect(url);
     }
+
     return supabaseResponse;
   }
 
-  return intlMiddleware(request);
+  return intlResponse;
 }
 
 export const config = {
-  // Match all pathnames except static files and Next.js internals
-  matcher: [
-    "/((?!_next|_vercel|.*\\..*).*)",
-  ],
+  matcher: ["/((?!_next|_vercel|.*\\..*).*)" ],
 };

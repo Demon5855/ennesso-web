@@ -12,18 +12,26 @@
     "carbon": "Carbon",
     "simulator": "Simulator",
     "reports": "Reports",
-    "lineage": "Lineage"
+    "lineage": "Lineage",
+    "generationMix": "Generation Mix",
+    "currentMix": "Current Mix",
+    "dailyGeneration": "Daily Generation — MWh",
+    "historicalDemand": "Historical Demand — MWh",
+    "carbonTrend": "Carbon Intensity Trend — kg CO₂/MWh"
   },
   "metrics": {
     "totalGeneration": "Total Generation",
     "renewableShare": "Renewable Share",
     "co2Intensity": "CO₂ Intensity",
     "co2Avoided": "CO₂ Avoided",
+    "co2Total": "Total CO₂",
     "totalDemand": "Total Demand",
     "avgDaily": "Avg Daily",
-    "peakDay": "Peak Day"
+    "peakDay": "Peak Day",
+    "avgRenewable": "Avg Renewable"
   },
   "generationType": {
+    "all": "All",
     "hydraulic": "Hydraulic",
     "thermal": "Thermal",
     "solar": "Solar",
@@ -39,7 +47,8 @@
     "percentage": "%",
     "hours": "h",
     "kgPerMwh": "kg/MWh",
-    "usdPerMwh": "USD/MWh"
+    "usdPerMwh": "USD/MWh",
+    "mwhPerDay": "MWh/day"
   },
   "quality": {
     "ok": "OK",
@@ -69,7 +78,13 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "lifecycleEmissions": "Lifecycle emissions",
+    "vsThermal": "vs 100% thermal",
+    "vsThermalBaseline": "vs 100% thermal baseline",
+    "ipccFactors": "IPCC lifecycle factors",
+    "renewableComposition": "Hydraulic + Solar + Wind + Biomass",
+    "mwhOn": "MWh on {date}"
   },
   "auth": {
     "signIn": "Sign in",
@@ -83,7 +98,13 @@
     "description": "Adjust the generation mix and see real-time carbon and cost recalculation.",
     "referenceTotal": "Reference total",
     "generationMix": "Generation Mix",
-    "results": "Results"
+    "results": "Results",
+    "renewableShare": "Renewable Share",
+    "avgLcoe": "Avg LCOE",
+    "carbonIntensity": "Carbon Intensity",
+    "approxEcuador": "Approx Ecuador 2024",
+    "adjustToBalance": "(adjust to 100%)",
+    "emissionFootnote": "Emission factors: IPCC AR5 (2014) lifecycle medians. LCOE: approximate Ecuador 2024 values."
   },
   "reports": {
     "title": "Reports",
@@ -92,6 +113,25 @@
     "endDate": "End date",
     "includeLineage": "Include data lineage audit section",
     "exportExcel": "Export Excel",
-    "exportPdf": "Export PDF"
+    "exportPdf": "Export PDF",
+    "generatingFor": "Generating reports for {start} → {end}. Adjust the date range in the topbar.",
+    "exportOptions": "Export Options",
+    "xlsxDesc": ".xlsx — Generation + Carbon sheets",
+    "pdfDesc": ".pdf — Summary report with tables"
+  },
+  "lineage": {
+    "recentIssues": "Recent quality issues — click to inspect lineage",
+    "noErrors": "No errors in this period. ✓",
+    "recordId": "Record ID",
+    "date": "Date",
+    "type": "Type",
+    "notes": "Notes",
+    "flag": "Flag"
+  },
+  "dateRange": {
+    "startTooEarly": "Start date cannot be before 2021-01-01",
+    "endInFuture": "End date cannot be in the future",
+    "startAfterEnd": "Start date must be before end date",
+    "rangeTooLarge": "Date range cannot exceed 365 days"
   }
 }

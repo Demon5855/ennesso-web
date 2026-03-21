@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { QualityBadge } from "@/components/ui/quality-badge";
 import { LineageSheet } from "@/components/dashboard/lineage-sheet";
@@ -18,6 +19,10 @@ function defaultDates() {
 }
 
 export default function LineagePage() {
+  const tL = useTranslations("lineage");
+  const tDash = useTranslations("dashboard");
+  const tQ = useTranslations("quality");
+  const tC = useTranslations("common");
   const dates = defaultDates();
   const [summary, setSummary] = useState<QualitySummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,16 +43,16 @@ export default function LineagePage() {
 
   return (
     <div className="flex flex-col h-full">
-      <Topbar title="LINEAGE" onDateChange={(s, e) => void load(s, e)} />
+      <Topbar title={tDash("lineage").toUpperCase()} />
 
       <div className="p-6 space-y-5">
         {/* Summary strip */}
         {summary && (
           <div className="flex gap-6 p-4 bg-surface border border-border rounded-lg">
-            <Stat label="Total records" value={summary.total_records} />
-            <Stat label="OK" value={summary.ok_count} color="#00C2A8" />
-            <Stat label="Warning" value={summary.warning_count} color="#F5A623" />
-            <Stat label="Error" value={summary.error_count} color="#EF4444" />
+            <Stat label={tQ("totalRecords")} value={summary.total_records} />
+            <Stat label={tQ("ok")} value={summary.ok_count} color="#00C2A8" />
+            <Stat label={tQ("warning")} value={summary.warning_count} color="#F5A623" />
+            <Stat label={tQ("error")} value={summary.error_count} color="#EF4444" />
           </div>
         )}
 
@@ -55,19 +60,19 @@ export default function LineagePage() {
         <div className="bg-surface border border-border rounded-lg overflow-hidden">
           <div className="px-5 py-3 border-b border-border">
             <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
-              Recent quality issues — click to inspect lineage
+              {tL("recentIssues")}
             </h2>
           </div>
 
           {loading && (
             <p className="font-mono text-sm text-muted p-5 animate-pulse">
-              Loading…
+              {tC("loading")}
             </p>
           )}
 
           {!loading && summary?.recent_errors.length === 0 && (
             <p className="font-mono text-sm text-muted p-5">
-              No errors in this period. ✓
+              {tL("noErrors")}
             </p>
           )}
 
@@ -75,7 +80,7 @@ export default function LineagePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Record ID", "Date", "Type", "Notes", "Flag"].map((h) => (
+                  {[tL("recordId"), tL("date"), tL("type"), tL("notes"), tL("flag")].map((h) => (
                     <th
                       key={h}
                       className="px-5 py-2.5 text-left font-sans text-xs text-muted uppercase tracking-wide"

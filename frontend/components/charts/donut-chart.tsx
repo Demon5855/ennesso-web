@@ -7,6 +7,14 @@ import type { EnergyMixResponse } from "@/types/api";
 interface DonutChartProps {
   data: EnergyMixResponse;
   size?: number;
+  labels?: {
+    hydraulic: string;
+    thermal: string;
+    solar: string;
+    wind: string;
+    biomass: string;
+    other: string;
+  };
 }
 
 interface SliceEntry {
@@ -15,14 +23,14 @@ interface SliceEntry {
   color: string;
 }
 
-export function DonutChart({ data, size = 220 }: DonutChartProps) {
+export function DonutChart({ data, size = 220, labels }: DonutChartProps) {
   const slices: SliceEntry[] = [
-    { name: "Hydraulic", value: data.hydraulic_pct, color: GENERATION_COLORS.hydraulic },
-    { name: "Thermal", value: data.thermal_pct, color: GENERATION_COLORS.thermal },
-    { name: "Solar", value: data.solar_pct, color: GENERATION_COLORS.solar },
-    { name: "Wind", value: data.wind_pct, color: GENERATION_COLORS.wind },
-    { name: "Biomass", value: data.biomass_pct, color: GENERATION_COLORS.biomass },
-    { name: "Other", value: data.other_pct, color: GENERATION_COLORS.other },
+    { name: labels?.hydraulic ?? "Hydraulic", value: data.hydraulic_pct, color: GENERATION_COLORS.hydraulic },
+    { name: labels?.thermal   ?? "Thermal",   value: data.thermal_pct,   color: GENERATION_COLORS.thermal   },
+    { name: labels?.solar     ?? "Solar",     value: data.solar_pct,     color: GENERATION_COLORS.solar     },
+    { name: labels?.wind      ?? "Wind",      value: data.wind_pct,      color: GENERATION_COLORS.wind      },
+    { name: labels?.biomass   ?? "Biomass",   value: data.biomass_pct,   color: GENERATION_COLORS.biomass   },
+    { name: labels?.other     ?? "Other",     value: data.other_pct,     color: GENERATION_COLORS.other     },
   ].filter((s) => s.value > 0);
 
   return (

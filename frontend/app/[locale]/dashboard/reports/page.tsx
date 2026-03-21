@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { FileText, Table, Loader2 } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
 import { downloadReport } from "@/lib/api-client";
+import { useDateRange } from "@/hooks/use-date-range";
 import { cn } from "@/lib/utils";
 
 export default function ReportsPage() {
-  const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 3);
-    return d.toISOString().split("T")[0] ?? "";
-  });
-  const [endDate, setEndDate] = useState(
-    () => new Date().toISOString().split("T")[0] ?? ""
-  );
+  const t = useTranslations("reports");
+  const { startDate, endDate } = useDateRange();
   const [includeLineage, setIncludeLineage] = useState(false);
   const [loadingExcel, setLoadingExcel] = useState(false);
   const [loadingPdf, setLoadingPdf] = useState(false);
@@ -39,50 +35,16 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <Topbar title="REPORTS" />
-
+      <Topbar title={t("title").toUpperCase()} />
       <div className="p-6 max-w-2xl space-y-6">
         <p className="font-sans text-sm text-muted">
-          Generate energy reports with generation data and carbon summary.
-          Exports are available in Excel and PDF formats.
+          {t("generatingFor", { start: startDate, end: endDate })}
         </p>
 
-        {/* Config card */}
-        <div className="bg-surface border border-border rounded-lg p-6 space-y-5">
+        <div className="bg-surface border border-border rounded-lg p-6 space-y-4">
           <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
-            Report Parameters
+            {t("exportOptions")}
           </h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="font-sans text-xs text-muted">
-                Start date
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className={cn(
-                  "w-full bg-background border border-border rounded px-3 py-2",
-                  "font-mono text-sm text-foreground",
-                  "focus:outline-none focus:border-primary"
-                )}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="font-sans text-xs text-muted">End date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className={cn(
-                  "w-full bg-background border border-border rounded px-3 py-2",
-                  "font-mono text-sm text-foreground",
-                  "focus:outline-none focus:border-primary"
-                )}
-              />
-            </div>
-          </div>
 
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -92,7 +54,7 @@ export default function ReportsPage() {
               className="accent-primary h-4 w-4"
             />
             <span className="font-sans text-sm text-foreground">
-              Include data lineage audit section
+              {t("includeLineage")}
             </span>
           </label>
 
@@ -101,7 +63,6 @@ export default function ReportsPage() {
           )}
         </div>
 
-        {/* Export buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => void handleDownload("excel")}
@@ -119,12 +80,8 @@ export default function ReportsPage() {
               <Table size={18} className="text-[#7ED321]" />
             )}
             <div className="text-left">
-              <p className="font-sans text-sm font-medium text-foreground">
-                Export Excel
-              </p>
-              <p className="font-sans text-xs text-muted">
-                .xlsx — Generation + Carbon sheets
-              </p>
+              <p className="font-sans text-sm font-medium text-foreground">{t("exportExcel")}</p>
+              <p className="font-sans text-xs text-muted">{t("xlsxDesc")}</p>
             </div>
           </button>
 
@@ -144,12 +101,8 @@ export default function ReportsPage() {
               <FileText size={18} className="text-[#E05C2A]" />
             )}
             <div className="text-left">
-              <p className="font-sans text-sm font-medium text-foreground">
-                Export PDF
-              </p>
-              <p className="font-sans text-xs text-muted">
-                .pdf — Summary report with tables
-              </p>
+              <p className="font-sans text-sm font-medium text-foreground">{t("exportPdf")}</p>
+              <p className="font-sans text-xs text-muted">{t("pdfDesc")}</p>
             </div>
           </button>
         </div>

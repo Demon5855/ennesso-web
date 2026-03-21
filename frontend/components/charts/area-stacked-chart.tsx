@@ -16,31 +16,39 @@ import type { DailyBalanceResponse } from "@/types/api";
 interface AreaStackedChartProps {
   data: DailyBalanceResponse[];
   height?: number;
-}
-
-const SOURCES = [
-  { key: "hydraulic_mwh", color: GENERATION_COLORS.hydraulic, label: "Hydraulic" },
-  { key: "thermal_mwh", color: GENERATION_COLORS.thermal, label: "Thermal" },
-  { key: "solar_mwh", color: GENERATION_COLORS.solar, label: "Solar" },
-  { key: "wind_mwh", color: GENERATION_COLORS.wind, label: "Wind" },
-  { key: "biomass_mwh", color: GENERATION_COLORS.biomass, label: "Biomass" },
-] as const;
-
-function formatAxisDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTooltipValue(value: number): string {
-  return `${(value / 1000).toFixed(1)} GWh`;
+  labels?: {
+    hydraulic: string;
+    thermal: string;
+    solar: string;
+    wind: string;
+    biomass: string;
+  };
 }
 
 export function AreaStackedChart({
   data,
   height = 320,
+  labels,
 }: AreaStackedChartProps) {
+  const SOURCES = [
+    { key: "hydraulic_mwh", color: GENERATION_COLORS.hydraulic, label: labels?.hydraulic ?? "Hydraulic" },
+    { key: "thermal_mwh",   color: GENERATION_COLORS.thermal,   label: labels?.thermal   ?? "Thermal"   },
+    { key: "solar_mwh",     color: GENERATION_COLORS.solar,     label: labels?.solar     ?? "Solar"     },
+    { key: "wind_mwh",      color: GENERATION_COLORS.wind,      label: labels?.wind      ?? "Wind"      },
+    { key: "biomass_mwh",   color: GENERATION_COLORS.biomass,   label: labels?.biomass   ?? "Biomass"   },
+  ] as const;
+
+  function formatAxisDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString("en", {
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  function formatTooltipValue(value: number): string {
+    return `${(value / 1000).toFixed(1)} GWh`;
+  }
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart

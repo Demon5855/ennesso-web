@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   BarChart2,
@@ -15,17 +16,18 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/dashboard/overview", label: "Overview", icon: BarChart2 },
-  { href: "/dashboard/generation", label: "Generation", icon: Zap },
-  { href: "/dashboard/demand", label: "Demand", icon: TrendingUp },
-  { href: "/dashboard/carbon", label: "Carbon", icon: Wind },
-  { href: "/dashboard/simulator", label: "Simulator", icon: Sliders },
-  { href: "/dashboard/reports", label: "Reports", icon: FileText },
-  { href: "/dashboard/lineage", label: "Lineage", icon: GitBranch },
+  { href: "/dashboard/overview", labelKey: "overview", icon: BarChart2 },
+  { href: "/dashboard/generation", labelKey: "generation", icon: Zap },
+  { href: "/dashboard/demand", labelKey: "demand", icon: TrendingUp },
+  { href: "/dashboard/carbon", labelKey: "carbon", icon: Wind },
+  { href: "/dashboard/simulator", labelKey: "simulator", icon: Sliders },
+  { href: "/dashboard/reports", labelKey: "reports", icon: FileText },
+  { href: "/dashboard/lineage", labelKey: "lineage", icon: GitBranch },
 ] as const;
 
 export function Sidebar() {
   const pathname = usePathname();
+  const t = useTranslations("dashboard");
 
   return (
     <aside className="w-56 flex-shrink-0 bg-surface border-r border-border flex flex-col h-screen sticky top-0">
@@ -41,7 +43,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
           const active = pathname.includes(href.split("/").pop() ?? "");
           return (
             <Link
@@ -59,7 +61,7 @@ export function Sidebar() {
                 size={15}
                 className={cn(active ? "text-primary" : "text-muted")}
               />
-              {label}
+              {t(labelKey)}
             </Link>
           );
         })}

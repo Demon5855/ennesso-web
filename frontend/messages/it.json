@@ -12,18 +12,26 @@
     "carbon": "Carbonio",
     "simulator": "Simulatore",
     "reports": "Rapporti",
-    "lineage": "Provenienza"
+    "lineage": "Provenienza",
+    "generationMix": "Mix di Generazione",
+    "currentMix": "Mix Attuale",
+    "dailyGeneration": "Generazione Giornaliera — MWh",
+    "historicalDemand": "Domanda Storica — MWh",
+    "carbonTrend": "Tendenza Intensità di Carbonio — kg CO₂/MWh"
   },
   "metrics": {
     "totalGeneration": "Generazione Totale",
     "renewableShare": "Quota Rinnovabile",
     "co2Intensity": "Intensità CO₂",
     "co2Avoided": "CO₂ Evitata",
+    "co2Total": "CO₂ Totale",
     "totalDemand": "Domanda Totale",
     "avgDaily": "Media Giornaliera",
-    "peakDay": "Picco del Periodo"
+    "peakDay": "Picco del Periodo",
+    "avgRenewable": "Rinnovabile Medio"
   },
   "generationType": {
+    "all": "Tutti",
     "hydraulic": "Idraulica",
     "thermal": "Termica",
     "solar": "Solare",
@@ -39,7 +47,8 @@
     "percentage": "%",
     "hours": "h",
     "kgPerMwh": "kg/MWh",
-    "usdPerMwh": "USD/MWh"
+    "usdPerMwh": "USD/MWh",
+    "mwhPerDay": "MWh/giorno"
   },
   "quality": {
     "ok": "OK",
@@ -69,7 +78,13 @@
     "cancel": "Annulla",
     "save": "Salva",
     "delete": "Elimina",
-    "confirm": "Conferma"
+    "confirm": "Conferma",
+    "lifecycleEmissions": "Emissioni ciclo di vita",
+    "vsThermal": "vs 100% termica",
+    "vsThermalBaseline": "vs 100% termica di riferimento",
+    "ipccFactors": "Fattori IPCC ciclo di vita",
+    "renewableComposition": "Idraulica + Solare + Eolica + Biomassa",
+    "mwhOn": "MWh il {date}"
   },
   "auth": {
     "signIn": "Accedi",
@@ -83,7 +98,13 @@
     "description": "Regola il mix di generazione e visualizza il ricalcolo in tempo reale di carbonio e costi.",
     "referenceTotal": "Totale di riferimento",
     "generationMix": "Mix di Generazione",
-    "results": "Risultati"
+    "results": "Risultati",
+    "renewableShare": "Quota Rinnovabile",
+    "avgLcoe": "LCOE Medio",
+    "carbonIntensity": "Intensità di Carbonio",
+    "approxEcuador": "Aprox. Ecuador 2024",
+    "adjustToBalance": "(adeguare al 100%)",
+    "emissionFootnote": "Fattori di emissione: IPCC AR5 (2014) mediane del ciclo di vita. LCOE: valori approssimativi Ecuador 2024."
   },
   "reports": {
     "title": "Rapporti",
@@ -92,6 +113,25 @@
     "endDate": "Data fine",
     "includeLineage": "Includi sezione audit di provenienza",
     "exportExcel": "Esporta Excel",
-    "exportPdf": "Esporta PDF"
+    "exportPdf": "Esporta PDF",
+    "generatingFor": "Generazione rapporti per {start} → {end}. Modifica l'intervallo di date nella barra superiore.",
+    "exportOptions": "Opzioni di Esportazione",
+    "xlsxDesc": ".xlsx — Generazione + fogli Carbonio",
+    "pdfDesc": ".pdf — Rapporto riepilogativo con tabelle"
+  },
+  "lineage": {
+    "recentIssues": "Problemi di qualità recenti — clicca per ispezionare la provenienza",
+    "noErrors": "Nessun errore in questo periodo. ✓",
+    "recordId": "ID Record",
+    "date": "Data",
+    "type": "Tipo",
+    "notes": "Note",
+    "flag": "Stato"
+  },
+  "dateRange": {
+    "startTooEarly": "La data di inizio non può essere anteriore al 2021-01-01",
+    "endInFuture": "La data di fine non può essere nel futuro",
+    "startAfterEnd": "La data di inizio deve essere anteriore alla data di fine",
+    "rangeTooLarge": "L'intervallo non può superare 365 giorni"
   }
 }

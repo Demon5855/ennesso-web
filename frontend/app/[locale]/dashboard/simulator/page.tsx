@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,10 @@ const TOTAL_MWH = 100_000; // Reference total generation for calculations
 
 export default function SimulatorPage() {
   const fmt = useEnergyFormatter();
+  const t = useTranslations("simulator");
+  const tType = useTranslations("generationType");
+  const tM = useTranslations("metrics");
+  const tC = useTranslations("common");
 
   const [mix, setMix] = useState<Record<Source, number>>({
     hydraulic: 70,
@@ -98,12 +103,12 @@ export default function SimulatorPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <Topbar title="SIMULATOR" />
+      <Topbar title={t("title").toUpperCase()} />
 
       <div className="p-6 space-y-6">
         <p className="font-sans text-sm text-muted">
-          Adjust the generation mix and see real-time carbon and cost recalculation.
-          Reference total: {fmt.compact(TOTAL_MWH)} MWh.
+          {t("description")}
+          {" "}Reference total: {fmt.compact(TOTAL_MWH)} MWh.
         </p>
 
         <div className="grid grid-cols-2 gap-6">
@@ -111,7 +116,7 @@ export default function SimulatorPage() {
           <div className="bg-surface border border-border rounded-lg p-5 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="font-mono text-xs text-muted uppercase tracking-widest">
-                Generation Mix
+                {t("generationMix")}
               </h2>
               <span
                 className={cn(
@@ -119,7 +124,7 @@ export default function SimulatorPage() {
                   isBalanced ? "text-[#00C2A8]" : "text-[#F5A623]"
                 )}
               >
-                {total.toFixed(1)}% {isBalanced ? "✓" : "(adjust to 100%)"}
+                {total.toFixed(1)}% {isBalanced ? "✓" : t("adjustToBalance")}
               </span>
             </div>
 
@@ -132,7 +137,7 @@ export default function SimulatorPage() {
                       style={{ backgroundColor: GENERATION_COLORS[source] }}
                     />
                     <span className="font-sans text-sm text-foreground">
-                      {SOURCE_LABELS[source]}
+                      {tType(source)}
                     </span>
                   </div>
                   <span className="font-mono text-sm text-foreground w-12 text-right">
@@ -159,40 +164,40 @@ export default function SimulatorPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <MetricCard
-                label="Total CO₂"
+                label={tM("co2Total")}
                 value={fmt.co2(results.totalCo2)}
-                subValue="Lifecycle emissions"
+                subValue={tC("lifecycleEmissions")}
               />
               <MetricCard
-                label="CO₂ Avoided"
+                label={tM("co2Avoided")}
                 value={fmt.co2(results.avoided)}
-                subValue="vs 100% thermal"
+                subValue={tC("vsThermal")}
                 trend="up"
               />
               <MetricCard
-                label="Carbon Intensity"
+                label={t("carbonIntensity")}
                 value={results.intensity.toFixed(1)}
                 unit="kg/MWh"
                 trend={results.intensity < 100 ? "up" : "down"}
               />
               <MetricCard
-                label="Avg LCOE"
+                label={t("avgLcoe")}
                 value={results.avgLcoe.toFixed(1)}
                 unit="USD/MWh"
-                subValue="Approx Ecuador 2024"
+                subValue={t("approxEcuador")}
               />
             </div>
 
             <div className="bg-surface border border-border rounded-lg p-5">
               <h2 className="font-mono text-xs text-muted uppercase tracking-widest mb-4">
-                Renewable Share
+                {t("renewableShare")}
               </h2>
               <div className="flex items-end gap-3">
                 <span className="font-mono text-4xl font-semibold text-primary">
                   {fmt.percent(results.renewableShare)}
                 </span>
                 <span className="font-sans text-xs text-muted mb-2">
-                  Hydraulic + Solar + Wind + Biomass
+                  {tC("renewableComposition")}
                 </span>
               </div>
 
@@ -213,8 +218,7 @@ export default function SimulatorPage() {
               {/* Emission reference */}
               <div className="mt-4 pt-4 border-t border-border">
                 <p className="font-sans text-xs text-muted">
-                  Emission factors: IPCC AR5 (2014) lifecycle medians.
-                  LCOE: approximate Ecuador 2024 values.
+                  {t("emissionFootnote")}
                 </p>
               </div>
             </div>
